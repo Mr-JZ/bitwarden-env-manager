@@ -21,9 +21,9 @@
       # Check Bitwarden login status
       BW_STATUS=$(bw status | jq -r .status)
       if [ "$BW_STATUS" != "unlocked" ]; then
-        echo "Bitwarden vault is locked. Please login and unlock first using:"
-        echo "bw login"
-        echo "bw unlock"
+        echo "🔒 Bitwarden vault is locked. Please login and unlock first using:"
+        echo "🔑 bw login"
+        echo "🔓 bw unlock"
         exit 1
       fi
 
@@ -39,7 +39,7 @@
 
       # Backup existing .env if it exists
       if [ -f .env ]; then
-        echo "Backing up existing .env to .env.backup"
+        echo "💾 Backing up existing .env to .env.backup"
         cp .env .env.backup
       fi
 
@@ -51,19 +51,19 @@
         if [ -f .env.backup ]; then
           echo "Checking for differences with previous version..."
           if diff .env .env.backup >/dev/null; then
-            echo "No changes detected."
+            echo "✅ No changes detected."
           else
             echo "Changes detected! Review the differences:"
             diff .env.backup .env || true
           fi
         fi
       else
-        echo "Failed to update .env file"
+        echo "❌ Failed to update .env file"
         echo "Error: $OUTPUT"
         # Restore backup if it exists
         if [ -f .env.backup ]; then
           mv .env.backup .env
-          echo "Restored previous .env from backup"
+          echo "♻️ Restored previous .env from backup"
         fi
         exit 1
       fi
@@ -109,11 +109,11 @@
 
       # Check for differences
       if diff -q "$TEMP_REMOTE" .env >/dev/null; then
-        echo "No changes detected. Skipping push to Bitwarden."
+        echo "👌 No changes detected. Skipping push to Bitwarden."
         rm -f "$TEMP_REMOTE"
         exit 0
       else
-        echo "Changes detected! Here are the differences:"
+        echo "🔄 Changes detected! Here are the differences:"
         diff "$TEMP_REMOTE" .env || true
         
         echo -n "Do you want to push these changes to Bitwarden? [y/N] "
@@ -128,7 +128,7 @@
               '.notes = $notes' | \
               bw encode | \
               bw edit item "$ITEM_ID" 2>&1); then
-            echo "Successfully updated Bitwarden entry!"
+            echo "🎉 Successfully updated Bitwarden entry!"
             echo "Response from Bitwarden: $OUTPUT"
           else
             echo "Failed to update Bitwarden entry"
@@ -137,7 +137,7 @@
             exit 1
           fi
         else
-          echo "Push cancelled."
+          echo "🚫 Push cancelled."
           rm -f "$TEMP_REMOTE"
           exit 0
         fi
@@ -199,7 +199,7 @@
     setupEnvScript = { }: ''
       setup_env() {
         if ! command -v bw >/dev/null 2>&1; then
-          echo "Bitwarden CLI is not installed. Please install it first."
+          echo "❌ Bitwarden CLI is not installed. Please install it first."
           return 1
         fi
 
@@ -209,13 +209,13 @@
 
         # Check if .env.example exists
         if [ ! -f .env.example ]; then
-          echo "No .env.example file found in the current directory."
+          echo "📛 No .env.example file found in the current directory."
           return 1
         fi
 
         # Check if .env already exists
         if [ -f .env ]; then
-          echo ".env file already exists."
+          echo "✅ .env file already exists."
           return 0
         fi
 
@@ -232,14 +232,14 @@
         BW_ITEM=$(bw get item "$BW_ITEM_NAME" 2>/dev/null)
         
         if [ $? -eq 0 ]; then
-          echo "Found environment configuration in Bitwarden vault."
-          echo "Creating .env file from Bitwarden entry..."
+          echo "🔍 Found environment configuration in Bitwarden vault."
+          echo "📝 Creating .env file from Bitwarden entry..."
           
           # Extract the notes field which contains our env file content
           bw get item "$BW_ITEM_NAME" | jq -r '.notes' > .env
           
           if [ -s .env ]; then
-            echo ".env file created successfully!"
+            echo "✨ .env file created successfully!"
             return 0
           else
             echo "Created .env file is empty. Please check the content in Bitwarden."
@@ -247,8 +247,8 @@
             return 1
           fi
         else
-          echo "No environment configuration found in Bitwarden."
-          echo "Please create a secure note in Bitwarden with the name: $BW_ITEM_NAME"
+          echo "❓ No environment configuration found in Bitwarden."
+          echo "📌 Please create a secure note in Bitwarden with the name: $BW_ITEM_NAME"
           echo "Copy the contents of .env.example as a starting point."
           echo "Then run this script again."
           return 1
