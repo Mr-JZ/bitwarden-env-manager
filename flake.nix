@@ -197,60 +197,66 @@
     '';
 
     setupEnvScript = { }: ''
-      if ! command -v bw >/dev/null 2>&1; then
-        echo "Bitwarden CLI is not installed. Please install it first."
-        exit 1
-      fi
-
-      # Get repository name and convert to uppercase
-      REPO_NAME=$(basename -s .git $(git config --get remote.origin.url) | tr '[:lower:]' '[:upper:]')
-      BW_ITEM_NAME="$REPO_NAME-LOCAL-ENV"
-
-      # Check if .env.example exists
-      if [ ! -f .env.example ]; then
-        echo "No .env.example file found in the current directory."
-        exit 1
-      fi
-
-      # Check if .env already exists
-      if [ -f .env ]; then
-        echo ".env file already exists."
-        exit 0
-      fi
-
-      # Check Bitwarden login status
-      BW_STATUS=$(bw status | jq -r .status)
-      if [ "$BW_STATUS" != "unlocked" ]; then
-        echo "Bitwarden vault is locked. Please login and unlock first using:"
-        echo "bw login"
-        echo "bw unlock"
-        exit 1
-      fi
-
-      # Try to get the environment file from Bitwarden
-      BW_ITEM=$(bw get item "$BW_ITEM_NAME" 2>/dev/null)
-      
-      if [ $? -eq 0 ]; then
-        echo "Found environment configuration in Bitwarden vault."
-        echo "Creating .env file from Bitwarden entry..."
-        
-        # Extract the notes field which contains our env file content
-        bw get item "$BW_ITEM_NAME" | jq -r '.notes' > .env
-        
-        if [ -s .env ]; then
-          echo ".env file created successfully!"
-        else
-          echo "Created .env file is empty. Please check the content in Bitwarden."
-          rm .env
-          exit 1
+      setup_env() {
+        if ! command -v bw >/dev/null 2>&1; then
+          echo "Bitwarden CLI is not installed. Please install it first."
+          return 1
         fi
-      else
-        echo "No environment configuration found in Bitwarden."
-        echo "Please create a secure note in Bitwarden with the name: $BW_ITEM_NAME"
-        echo "Copy the contents of .env.example as a starting point."
-        echo "Then run this script again."
-        exit 1
-      fi
+
+        # Get repository name and convert to uppercase
+        REPO_NAME=$(basename -s .git $(git config --get remote.origin.url) | tr '[:lower:]' '[:upper:]')
+        BW_ITEM_NAME="$REPO_NAME-LOCAL-ENV"
+
+        # Check if .env.example exists
+        if [ ! -f .env.example ]; then
+          echo "No .env.example file found in the current directory."
+          return 1
+        fi
+
+        # Check if .env already exists
+        if [ -f .env ]; then
+          echo ".env file already exists."
+          return 0
+        fi
+
+        # Check Bitwarden login status
+        BW_STATUS=$(bw status | jq -r .status)
+        if [ "$BW_STATUS" != "unlocked" ]; then
+          echo "Bitwarden vault is locked. Please login and unlock first using:"
+          echo "bw login"
+          echo "bw unlock"
+          return 1
+        fi
+
+        # Try to get the environment file from Bitwarden
+        BW_ITEM=$(bw get item "$BW_ITEM_NAME" 2>/dev/null)
+        
+        if [ $? -eq 0 ]; then
+          echo "Found environment configuration in Bitwarden vault."
+          echo "Creating .env file from Bitwarden entry..."
+          
+          # Extract the notes field which contains our env file content
+          bw get item "$BW_ITEM_NAME" | jq -r '.notes' > .env
+          
+          if [ -s .env ]; then
+            echo ".env file created successfully!"
+            return 0
+          else
+            echo "Created .env file is empty. Please check the content in Bitwarden."
+            rm .env
+            return 1
+          fi
+        else
+          echo "No environment configuration found in Bitwarden."
+          echo "Please create a secure note in Bitwarden with the name: $BW_ITEM_NAME"
+          echo "Copy the contents of .env.example as a starting point."
+          echo "Then run this script again."
+          return 1
+        fi
+      }
+
+      # Run the function but don't exit the shell
+      setup_env
     '';
   
         devShells = forAllSystems (system:
@@ -277,7 +283,13 @@
               createScript
               pushScript
               pullScript
-              ];
+                            ];
+                            
+                            shellHook = ''
+              echo "🔐 Checking Bitwarden environment setup..."
+              ${self.setupEnvScript {}}
+              echo "💻 Development shell ready!"
+                            '';
             };
           }
         );
