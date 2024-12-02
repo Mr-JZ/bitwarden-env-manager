@@ -162,9 +162,9 @@
       # Check Bitwarden login status
       BW_STATUS=$(bw status | jq -r .status)
       if [ "$BW_STATUS" != "unlocked" ]; then
-        echo "Bitwarden vault is locked. Please login and unlock first using:"
-        echo "bw login"
-        echo "bw unlock"
+        echo "🔒 Bitwarden vault is locked. Please login and unlock first using:"
+        echo "🧔 'bw login'"
+        echo "🔓 'bw unlock'"
         exit 1
       fi
 
@@ -174,7 +174,7 @@
 
       # Check if item already exists
       if bw get item "$BW_ITEM_NAME" &>/dev/null; then
-        echo "A Bitwarden entry with name '$BW_ITEM_NAME' already exists."
+        echo "🛡️ A Bitwarden entry with name '$BW_ITEM_NAME' already exists."
         exit 1
       fi
 
@@ -186,12 +186,12 @@
           '.type=2 | .name=$name | .notes=$notes | .secureNote={"type":0}' | \
           bw encode | \
           bw create item 2>&1); then
-        echo "Successfully created Bitwarden entry!"
-        echo "Response from Bitwarden: $OUTPUT"
-        echo "You can now run 'setup-env' to fetch and create your .env file"
+        echo "✅ Successfully created Bitwarden entry!"
+        echo "🗣️ Response from Bitwarden: $OUTPUT"
+        echo "📄 You can now run 'setup-env' to fetch and create your .env file"
       else
-        echo "Failed to create Bitwarden entry"
-        echo "Error: $OUTPUT"
+        echo "🔴 Failed to create Bitwarden entry"
+        echo "🔴 Error: $OUTPUT"
         exit 1
       fi
     '';
