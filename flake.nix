@@ -182,7 +182,7 @@
       echo "Preparing Bitwarden entry..."
       if OUTPUT=$(bw get template item | \
           jq --arg name "$BW_ITEM_NAME" \
-             --arg notes "$(cat .env.example)" \
+             --arg notes "$(cat .env)" \
           '.type=2 | .name=$name | .notes=$notes | .secureNote={"type":0}' | \
           bw encode | \
           bw create item 2>&1); then
