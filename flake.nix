@@ -153,7 +153,7 @@
         exit 1
       fi
 
-      # Check if .env.example exists
+      # Check if .env exists
       if [ ! -f .env ]; then
         echo "No .env file found in the current directory."
         exit 1
